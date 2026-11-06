@@ -6,8 +6,8 @@
 // plays the pattern's bass line transposed to that key. The "Rock" pattern is
 // the one that became the Sleng Teng riddim.
 //
-// Sources: the Rock bass line was supplied by the project owner (see
-// below). The other patterns and all drum grids are best guesses: the MT-40
+// Sources: the Rock bass line and drums were supplied by the project owner
+// (see below). The other five patterns are best guesses: the MT-40
 // stores them in the 1 KB internal ROM of its accompaniment CPU (an NEC
 // 8048-family part that also drives the analog drum triggers and the bass
 // tone), and no dump of that ROM is publicly available. Everything is plain
@@ -54,15 +54,13 @@ inline const std::array<Rhythm, kNumRhythms> kRhythms {{
     // (B just below the root; F and E above it). Supplied by the project owner; it
     // replaces an earlier version taken from Ableton Learning Music's
     // transcription, which had a different neighbour note and ending.
-    // On the MT-40 this is the two-bar Rock preset in 8ths at roughly
-    // double tempo; it is stored here as one bar of 16ths so a DAW set to the
-    // record's tempo (~82 BPM) lines up.
-    // The drum grid is NOT from a source: it is a best guess (kick on the
-    // beat, snare on the off-beat 8ths, 16th hats) pending a ROM dump.
+    // Stored as one bar of 16ths; the record runs at roughly 82 BPM.
+    // Drums, also supplied by the project owner: hi-hat on 8ths, snare on
+    // beats 2 and 4, kick "k..kk..." (16ths) repeated each half bar.
     { "Rock", 4, 4, 1,
-      "X...X...X...X...",
-      "..X...X...X...X.",
-      "xoxoxoxoxoxoxoxo",
+      "x..xx...x..xx...",
+      "....X.......X...",
+      "x.x.x.x.x.x.x.x.",
       "",
       "",
       { {0,-1,1},{1,0,1},{2,0,1},{3,0,1},
