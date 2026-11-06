@@ -48,7 +48,19 @@ void Teng40LookAndFeel::drawButtonBackground(juce::Graphics& g, juce::Button& b,
 void Teng40LookAndFeel::drawButtonText(juce::Graphics& g, juce::TextButton& b, bool, bool) {
     g.setColour(b.findColour(b.getToggleState() ? juce::TextButton::textColourOnId : juce::TextButton::textColourOffId));
     g.setFont(juce::FontOptions(10.5f, juce::Font::bold));
-    g.drawFittedText(b.getButtonText(), b.getLocalBounds().reduced(3, 2), juce::Justification::centred, 2, 0.8f);
+    auto area = b.getLocalBounds().reduced(3, 2);
+    const auto lines = juce::StringArray::fromLines(b.getButtonText());
+    if (lines.size() < 2) {
+        g.drawFittedText(b.getButtonText(), area, juce::Justification::centred, 2, 0.6f);
+        return;
+    }
+    // Tone tabs: number on top, name below. Long single words are squeezed
+    // horizontally rather than truncated.
+    const int lineH = 12;
+    const int nameLines = lines[1].containsChar(' ') ? 2 : 1;
+    auto block = area.withSizeKeepingCentre(area.getWidth(), lineH * (1 + nameLines));
+    g.drawText(lines[0], block.removeFromTop(lineH), juce::Justification::centred, false);
+    g.drawFittedText(lines[1], block, juce::Justification::centredTop, nameLines, 0.4f);
 }
 
 void Teng40LookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int w, int h, float pos, float, float,
