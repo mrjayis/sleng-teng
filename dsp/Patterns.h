@@ -50,8 +50,8 @@ inline constexpr int kNumRhythms = 6;
 inline const std::array<Rhythm, kNumRhythms> kRhythms {{
     // ROCK — the Sleng Teng pattern.
     // Bass line, in C: B C C C | B C C C | B C C C | F - E -  (16ths)
-    // i.e. -1 0 0 0 (x3), then -7, rest, -8, rest relative to the held key
-    // (B, F and E all below the root). Supplied by the project owner; it
+    // i.e. -1 0 0 0 (x3), then +5, rest, +4, rest relative to the held key
+    // (B just below the root; F and E above it). Supplied by the project owner; it
     // replaces an earlier version taken from Ableton Learning Music's
     // transcription, which had a different neighbour note and ending.
     // On the MT-40 this is the two-bar Rock preset in 8ths at roughly
@@ -68,7 +68,7 @@ inline const std::array<Rhythm, kNumRhythms> kRhythms {{
       { {0,-1,1},{1,0,1},{2,0,1},{3,0,1},
         {4,-1,1},{5,0,1},{6,0,1},{7,0,1},
         {8,-1,1},{9,0,1},{10,0,1},{11,0,1},
-        {12,-7,1},{14,-8,1} } },
+        {12,5,1},{14,4,1} } },
 
     { "Samba", 4, 4, 2,
       "X..xX..xX..xX..xX..xX..xX..xX..x",
