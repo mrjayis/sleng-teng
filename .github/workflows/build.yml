@@ -61,6 +61,8 @@ jobs:
           sudo apt-get install -y clang-18 lld-18 wasi-libc libc++-18-dev-wasm32 libclang-rt-18-dev-wasm32
       - name: Build engine (WebAssembly)
         run: CXX=clang++-18 ./web/build.sh
+      - name: Check committed web/teng40.wasm is up to date
+        run: git diff --quiet -- web/teng40.wasm || echo "::warning file=web/teng40.wasm::Committed teng40.wasm differs from a fresh build. Run ./web/build.sh and commit it so GitHub Pages serves the current engine."
       - name: Smoke test in Node
         run: |
           node -e "

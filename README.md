@@ -77,10 +77,10 @@ sudo apt-get install clang lld wasi-libc libc++-18-dev-wasm32 libclang-rt-18-dev
 python3 -m http.server -d web 8000    # then open http://localhost:8000
 ```
 
-`.github/workflows/pages.yml` publishes it to GitHub Pages on every push to
-`main`. One-time setup: **Settings → Pages → Source: GitHub Actions**. Pages
-for a private repository needs a paid GitHub plan, and the published site is
-public.
+**Live site:** https://mrjayis.github.io/sleng-teng/ (GitHub Pages, "Deploy from
+a branch"). Pages serves the repository as-is, so the compiled
+`web/teng40.wasm` is committed. After changing anything in `dsp/`, run
+`./web/build.sh` and commit the new `.wasm` too. CI warns if it's stale.
 
 ## Building
 
