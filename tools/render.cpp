@@ -3,7 +3,7 @@
 //   teng_render [out.wav] [bpm]
 //
 // Checks the pattern tables, then renders a short Sleng Teng-style demo:
-// Rock rhythm at 82 BPM with synchro auto-bass on D, then G, and organ
+// Rock rhythm at 82 BPM with synchro auto-bass on D, then G, and major organ
 // stabs on top. Exits non-zero if the output is silent or not finite.
 
 #include <algorithm>
@@ -101,10 +101,10 @@ int main(int argc, char** argv) {
     for (int i = 0; i < 4; ++i) {
         evs.push_back({ i * 8.0 + 0.0, true, bassKeys[i] });
         evs.push_back({ i * 8.0 + 7.9, false, bassKeys[i] });
-        // off-beat organ stabs (D minor / G minor triads), from bar 3 on
+        // off-beat organ stabs (D major / G major triads), from bar 3 on
         if (i == 0) continue;
         const int root = bassKeys[i] + 24;
-        const int chord[3] = { root, root + 3, root + 7 };
+        const int chord[3] = { root, root + 4, root + 7 };
         for (int b = 0; b < 8; ++b)
             for (int c : chord) {
                 evs.push_back({ i * 8.0 + b + 0.5, true, c });
