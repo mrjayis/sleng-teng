@@ -7,6 +7,7 @@
 
 #include "Patterns.h"
 #include "Tones.h"
+#include "Upd931.h"
 
 namespace teng {
 
@@ -22,7 +23,7 @@ struct Params {
     // rhythm / bass section
     int rhythm = 0;
     bool rhythmOn = false;
-    double tempo = 120.0;
+    double tempo = 82.0;
     bool synchro = true;   // bass key starts the rhythm (internal clock only)
     bool autoBass = true;  // bass key plays the pattern's bass line
     int bassOctave = 0;
@@ -31,7 +32,7 @@ struct Params {
     float drumVol = 0.7f;
 
     // output
-    float lofi = 0.3f;
+    float lofi = 0.0f;  // extra degradation on top of the chip model
     bool speaker = false;
     float masterVol = 0.8f;
 };
@@ -72,50 +73,26 @@ struct SVF {
     void reset() { ic1 = ic2 = 0; }
 };
 
-struct Env {
-    enum Stage { Off, Attack, Decay, Sustain, Release } stage = Off;
-    float v = 0;
-    float aInc = 1, dCoef = 0, rCoef = 0, s = 1;
-    void set(double sr, float aMs, float dMs, float sus, float rMs);
-    void on() { stage = Attack; }
-    void off() { if (stage != Off) stage = Release; }
-    float next();
-    bool active() const { return stage != Off; }
-};
-
 // ---------------------------------------------------------------------------
 // Voices
 // ---------------------------------------------------------------------------
 
-struct MelodyVoice {
-    bool held = false;
-    int note = -1;
-    uint64_t age = 0;
-    float vel = 1.0f;
-    double freq = 440.0;
-    const ToneDef* tone = nullptr;
-    PulseOsc osc[4];
-    float oscLevel[4] {};
-    double oscMul[4] {};
-    Env amp, fenv;
-    SVF filter;
-    int ctrlCounter = 0;
-
-    void start(int midiNote, float velocity, const ToneDef& t, double sr, bool sustainOn, uint64_t stamp);
-    void release() { held = false; amp.off(); fenv.off(); }
-    bool active() const { return amp.active(); }
-    float render(double sr, float vibratoRatio);
-};
-
+// Bass section. On the MT-40 the accompaniment CPU produces the bass tone as a
+// square wave on a port pin, plus envelope trigger lines into an analog VCA.
+// Modelled as: square wave -> envelope (fast attack, slow decay while gated,
+// quick release) -> RC low-pass -> AC coupling.
 struct BassVoice {
-    PulseOsc a, b;
-    Env amp, fenv;
-    SVF filter;
+    PulseOsc osc;
+    float env = 0.0f;
+    bool gate = false;
+    bool attack = false;
     int note = -1;
-    int ctrlCounter = 0;
+    float atkCoef = 0, decCoef = 0, relCoef = 0, lpA = 0;
+    float lp1 = 0, lp2 = 0, dcX = 0, dcY = 0;
+    void prepare(double sr);
     void start(int midiNote, double sr);
-    void release() { amp.off(); }
-    float render(double sr);
+    void release() { gate = false; }
+    float render();
 };
 
 struct DrumKit {
@@ -144,8 +121,6 @@ struct DrumKit {
 
 class Engine {
 public:
-    static constexpr int kPolyphony = 8;
-
     void prepare(double sampleRate);
     void setParams(const Params& p);
     const Params& params() const { return p_; }
@@ -177,9 +152,8 @@ private:
     Params p_;
     Transport t_;
 
-    std::array<MelodyVoice, kPolyphony> voices_ {};
-    uint64_t stamp_ = 0;
-    double vibPhase_ = 0.0;
+    Upd931 chip_;
+    int heldMelody_[128] {}; // played (transposed) note per MIDI key, -1 = none
 
     BassVoice bass_;
     DrumKit drums_;

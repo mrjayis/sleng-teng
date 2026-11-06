@@ -6,10 +6,12 @@
 // plays the pattern's bass line transposed to that key. The "Rock" pattern is
 // the one that became the Sleng Teng riddim.
 //
-// IMPORTANT: these patterns were transcribed by ear / from memory, not dumped
-// from the instrument's ROM. The drum grids and the Rock bass line are close in
-// feel but may not match note-for-note. Everything is plain data, so correct it
-// here if you have the hardware or a reference recording.
+// Sources: the Rock bass line comes from a published transcription (see
+// below). The other patterns and all drum grids are best guesses: the MT-40
+// stores them in the 1 KB internal ROM of its accompaniment CPU (an NEC
+// 8048-family part that also drives the analog drum triggers and the bass
+// tone), and no dump of that ROM is publicly available. Everything is plain
+// data, so correct it here if you have the hardware or a reference recording.
 //
 // Drum grids: one character per step.
 //   '.' = rest   'o' = soft   'x' = normal   'X' = accent
@@ -46,15 +48,26 @@ inline constexpr int kNumRhythms = 6;
 
 // clang-format off
 inline const std::array<Rhythm, kNumRhythms> kRhythms {{
-    // ROCK — the Sleng Teng pattern. Steps are 16ths over two bars of 4/4.
-    { "Rock", 4, 4, 2,
-      "X.......x.x.....X.......x.x.....",
-      "....X.......X.......X.......X...",
-      "x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.",
+    // ROCK — the Sleng Teng pattern.
+    // Bass line from Ableton Learning Music's transcription of "Under Mi
+    // Sleng Teng" (learningmusic.ableton.com/make-basslines/sleng-teng.html):
+    // in D at 82 BPM, 16ths: E D D D | E D D D | E D D D | A - B -
+    // i.e. +2 0 0 0 (x3), then -5, rest, -3, rest relative to the held key.
+    // On the MT-40 this is the two-bar Rock preset in 8ths at roughly
+    // double tempo; it is stored here as one bar of 16ths so a DAW set to the
+    // record's tempo (~82 BPM) lines up.
+    // The drum grid is NOT from a source: it is a best guess (kick on the
+    // beat, snare on the off-beat 8ths, 16th hats) pending a ROM dump.
+    { "Rock", 4, 4, 1,
+      "X...X...X...X...",
+      "..X...X...X...X.",
+      "xoxoxoxoxoxoxoxo",
       "",
       "",
-      { {0,0,3},{3,0,1},{4,0,2},{6,0,1},{7,3,1},{8,5,2},{10,3,2},{12,0,2},{14,-2,2},
-        {16,0,3},{19,0,1},{20,0,2},{22,0,1},{23,3,1},{24,5,2},{26,7,2},{28,5,2},{30,3,2} } },
+      { {0,2,1},{1,0,1},{2,0,1},{3,0,1},
+        {4,2,1},{5,0,1},{6,0,1},{7,0,1},
+        {8,2,1},{9,0,1},{10,0,1},{11,0,1},
+        {12,-5,1},{14,-3,1} } },
 
     { "Samba", 4, 4, 2,
       "X..xX..xX..xX..xX..xX..xX..xX..x",

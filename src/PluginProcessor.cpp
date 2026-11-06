@@ -45,7 +45,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Teng40Processor::createLayou
     l.add(std::make_unique<AudioParameterChoice>(ParameterID { ids::rhythm, 1 }, "Rhythm", rhythmNames, 0));
     l.add(std::make_unique<AudioParameterBool>(ParameterID { ids::rhythmOn, 1 }, "Rhythm Start/Stop", false));
     l.add(std::make_unique<AudioParameterFloat>(ParameterID { ids::tempo, 1 }, "Tempo",
-                                                NormalisableRange<float>(40.f, 240.f, 0.1f), 120.f));
+                                                NormalisableRange<float>(40.f, 240.f, 0.1f), 82.f));
     l.add(std::make_unique<AudioParameterBool>(ParameterID { ids::hostSync, 1 }, "Host Sync", true));
     l.add(std::make_unique<AudioParameterBool>(ParameterID { ids::synchro, 1 }, "Synchro Start", true));
     l.add(std::make_unique<AudioParameterBool>(ParameterID { ids::autoBass, 1 }, "Auto Bass", true));
@@ -59,7 +59,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Teng40Processor::createLayou
     l.add(std::make_unique<AudioParameterBool>(ParameterID { ids::fill, 1 }, "Fill-In", false));
 
     l.add(std::make_unique<AudioParameterFloat>(ParameterID { ids::lofi, 1 }, "Lo-Fi",
-                                                NormalisableRange<float>(0.f, 1.f), 0.3f));
+                                                NormalisableRange<float>(0.f, 1.f), 0.0f));
     l.add(std::make_unique<AudioParameterBool>(ParameterID { ids::speaker, 1 }, "Speaker", false));
     l.add(std::make_unique<AudioParameterFloat>(ParameterID { ids::masterVol, 1 }, "Master Volume",
                                                 NormalisableRange<float>(0.f, 1.f), 0.8f));

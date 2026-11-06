@@ -12,7 +12,7 @@ option(TENG_BUILD_PLUGIN "Build the JUCE plugin (VST3/AU/Standalone)" ON)
 option(TENG_BUILD_TOOLS  "Build the offline render / smoke-test tool" ON)
 
 # --- framework-free DSP core ------------------------------------------------
-add_library(teng_dsp STATIC dsp/Engine.cpp)
+add_library(teng_dsp STATIC dsp/Engine.cpp dsp/Upd931.cpp)
 target_include_directories(teng_dsp PUBLIC dsp)
 
 if(TENG_BUILD_TOOLS)

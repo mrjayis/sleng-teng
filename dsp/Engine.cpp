@@ -60,102 +60,44 @@ SVF::Out SVF::process(float x) {
     return { v2, v1, x - k * v1 - v2 };
 }
 
-void Env::set(double sr, float aMs, float dMs, float sus, float rMs) {
-    aInc = (float)(1.0 / (std::max(aMs, 0.5f) * 0.001 * sr));
-    dCoef = dMs <= 0.0f ? 0.0f : (float)std::exp(-1.0 / (dMs * 0.001 * sr / 3.0));
-    rCoef = (float)std::exp(-1.0 / (std::max(rMs, 1.0f) * 0.001 * sr / 3.0));
-    s = sus;
-}
-
-float Env::next() {
-    switch (stage) {
-        case Off: v = 0.0f; break;
-        case Attack:
-            v += aInc;
-            if (v >= 1.0f) { v = 1.0f; stage = Decay; }
-            break;
-        case Decay:
-            v = s + (v - s) * dCoef;
-            if (std::fabs(v - s) < 1e-4f) { v = s; stage = s <= 0.0f ? Off : Sustain; }
-            break;
-        case Sustain: v = s; break;
-        case Release:
-            v *= rCoef;
-            if (v < 1e-4f) { v = 0.0f; stage = Off; }
-            break;
-    }
-    return v;
-}
-
 // ---------------------------------------------------------------------------
 
-void MelodyVoice::start(int midiNote, float velocity, const ToneDef& t, double sr, bool sustainOn, uint64_t stamp) {
-    tone = &t;
-    note = midiNote;
-    vel = velocity;
-    held = true;
-    age = stamp;
-    freq = midiToHz(midiNote);
-
-    const Footage* f[4] = { &t.f16, &t.f8, &t.f4, &t.f2 };
-    const double base[4] = { 0.5, 1.0, 2.0, 4.0 };
-    const double det = std::pow(2.0, t.detuneCents / 1200.0);
-    for (int i = 0; i < 4; ++i) {
-        oscLevel[i] = f[i]->level;
-        oscMul[i] = base[i] * (i >= 2 ? det : 1.0);
-        osc[i].duty = f[i]->duty > 0.0f ? f[i]->duty : 0.5f;
-        osc[i].phase = 0.0;
-    }
-
-    float rel = sustainOn ? std::max(t.releaseMs, 1500.0f) : t.releaseMs;
-    amp.set(sr, t.attackMs, t.decayMs, t.sustain, rel);
-    fenv.set(sr, 1.0f, t.filterDecayMs, 0.0f, t.filterDecayMs);
-    amp.on();
-    fenv.on();
-    ctrlCounter = 0;
+void BassVoice::prepare(double sr) {
+    auto coef = [sr](double ms) { return (float)std::exp(-1.0 / (ms * 0.001 * sr)); };
+    atkCoef = coef(1.0);
+    decCoef = coef(450.0);
+    relCoef = coef(25.0);
+    lpA = 1.0f - (float)std::exp(-kTwoPi * 1100.0 / sr);
+    osc.duty = 0.5f;
 }
-
-float MelodyVoice::render(double sr, float vibratoRatio) {
-    float fe = fenv.next();
-    if ((ctrlCounter++ & 7) == 0) {
-        float cutoff = tone->cutoffHz * (float)std::pow(freq / 261.63, (double)tone->keytrack)
-                     * std::exp2(tone->envOctaves * fe);
-        filter.set(cutoff, 0.707f, sr);
-    }
-    float sum = 0.0f, norm = 0.0f;
-    for (int i = 0; i < 4; ++i) {
-        if (oscLevel[i] <= 0.0f) continue;
-        osc[i].inc = freq * oscMul[i] * vibratoRatio / sr;
-        sum += oscLevel[i] * osc[i].next();
-        norm += oscLevel[i];
-    }
-    if (norm > 0.0f) sum /= norm;
-    return filter.process(sum).lp * amp.next() * vel;
-}
-
-// ---------------------------------------------------------------------------
 
 void BassVoice::start(int midiNote, double sr) {
     note = midiNote;
-    double f = midiToHz(midiNote);
-    a.inc = f / sr; a.duty = 0.5f;
-    b.inc = f / sr; b.duty = 0.25f;
-    amp.set(sr, 2.0f, 700.0f, 0.4f, 60.0f);
-    fenv.set(sr, 1.0f, 180.0f, 0.0f, 100.0f);
-    amp.on();
-    fenv.on();
-    ctrlCounter = 0;
+    osc.inc = midiToHz(midiNote) / sr; // free-running, like a CPU timer output
+    gate = true;
+    env = std::max(env, 0.0f);
+    attack = true;
 }
 
-float BassVoice::render(double sr) {
-    float fe = fenv.next();
-    if ((ctrlCounter++ & 7) == 0 && note >= 0) {
-        float track = (float)std::sqrt(midiToHz(note) / 65.4);
-        filter.set(450.0f * track * std::exp2(2.2f * fe), 0.9f, sr);
+float BassVoice::render() {
+    if (gate) {
+        if (attack) {
+            env = 1.0f - (1.0f - env) * atkCoef;
+            if (env > 0.98f) attack = false;
+        } else {
+            env *= decCoef;
+        }
+    } else {
+        env *= relCoef;
     }
-    if (!amp.active()) { filter.process(0.0f); return 0.0f; }
-    float x = 0.6f * a.next() + 0.4f * b.next();
-    return filter.process(x).lp * amp.next();
+    float x = env > 1e-5f ? osc.next() * env : 0.0f;
+    if (env <= 1e-5f) osc.next();
+    lp1 += lpA * (x - lp1);
+    lp2 += lpA * (lp1 - lp2);
+    const float y = lp2 - dcX + 0.999f * dcY;
+    dcX = lp2;
+    dcY = y;
+    return y;
 }
 
 // ---------------------------------------------------------------------------
@@ -206,8 +148,11 @@ float DrumKit::render(double sr) {
 void Engine::prepare(double sampleRate) {
     sr_ = sampleRate;
     drums_.prepare(sr_);
-    for (auto& v : voices_) { v.amp.stage = Env::Off; v.filter.reset(); }
-    bass_.amp.stage = Env::Off;
+    chip_.prepare(sr_);
+    chip_.setPatch(kTones[(size_t)p_.tone]);
+    for (int& n : heldMelody_) n = -1;
+    bass_ = BassVoice {};
+    bass_.prepare(sr_);
     spkHP_.set(180.0f, 0.707f, sr_);
     spkLP_.set(4500.0f, 1.2f, sr_);
     outLP_.set(16000.0f, 0.707f, sr_);
@@ -223,6 +168,11 @@ void Engine::setParams(const Params& p) {
     p_.tone = std::clamp(p_.tone, 0, kNumTones - 1);
     p_.rhythm = std::clamp(p_.rhythm, 0, kNumRhythms - 1);
     p_.tempo = std::clamp(p_.tempo, 30.0, 300.0);
+    // The tone selector rewrites the chip's patch registers immediately,
+    // so changing tone also changes notes that are already sounding.
+    chip_.setPatch(kTones[(size_t)p_.tone]);
+    chip_.setSustain(p_.sustain);
+    chip_.setVibrato(p_.vibrato);
 }
 
 void Engine::beginBlock(const Transport& t) {
@@ -303,31 +253,23 @@ void Engine::noteOn(int note, float velocity, int channel) {
     const int n = std::clamp(note + p_.transpose, 0, 127);
     const float v = p_.velocitySensitive ? std::clamp(velocity, 0.05f, 1.0f) : 0.85f;
 
-    MelodyVoice* target = nullptr;
-    for (auto& vo : voices_) if (vo.active() && vo.note == n) { target = &vo; break; }
-    if (!target) for (auto& vo : voices_) if (!vo.active()) { target = &vo; break; }
-    if (!target) {
-        // steal: oldest released voice first, otherwise oldest
-        for (auto& vo : voices_)
-            if (!vo.held && (!target || vo.age < target->age)) target = &vo;
-        if (!target)
-            for (auto& vo : voices_)
-                if (!target || vo.age < target->age) target = &vo;
-    }
-    target->start(n, v, kTones[(size_t)p_.tone], sr_, p_.sustain, ++stamp_);
+    heldMelody_[note] = n;
+    chip_.noteOn(n, v);
 }
 
 void Engine::noteOff(int note, int channel) {
     if (note < 0 || note > 127) return;
     if (bassHeld_[note] && (note < p_.splitNote || channel == 2)) { onBassKeyUp(note); return; }
     if (note < p_.splitNote) { onBassKeyUp(note); return; }
-    const int n = std::clamp(note + p_.transpose, 0, 127);
-    for (auto& vo : voices_)
-        if (vo.held && vo.note == n) vo.release();
+    if (heldMelody_[note] >= 0) {
+        chip_.noteOff(heldMelody_[note]);
+        heldMelody_[note] = -1;
+    }
 }
 
 void Engine::allNotesOff() {
-    for (auto& vo : voices_) vo.release();
+    chip_.allNotesOff();
+    for (int& n : heldMelody_) n = -1;
     bassHeld_.fill(false);
     manualBassNote_ = -1;
     bass_.release();
@@ -377,7 +319,6 @@ void Engine::process(float* out, int n) {
     const Rhythm& r = kRhythms[(size_t)p_.rhythm];
     const double bpm = t_.useHost ? t_.bpm : p_.tempo;
     const double beatInc = std::max(1.0, bpm) / 60.0 / sr_;
-    const double vibInc = 5.5 / sr_;
 
     // Output-chain settings (cheap to recompute per block).
     const float lofi = std::clamp(p_.lofi, 0.0f, 1.0f);
@@ -392,23 +333,14 @@ void Engine::process(float* out, int n) {
             beat_ += beatInc;
         }
 
-        vibPhase_ += vibInc;
-        if (vibPhase_ >= 1.0) vibPhase_ -= 1.0;
-        const float vib = 1.0f + 0.007f * (float)std::sin(kTwoPi * vibPhase_);
-
-        float mel = 0.0f;
-        for (auto& vo : voices_) {
-            if (!vo.active()) continue;
-            const bool useVib = p_.vibrato || (vo.tone && vo.tone->vibrato);
-            mel += vo.render(sr_, useVib ? vib : 1.0f);
-        }
+        const float mel = chip_.render();
 
         gMel_ += (p_.melodyVol - gMel_) * 0.002f;
         gBass_ += (p_.bassVol - gBass_) * 0.002f;
         gDrum_ += (p_.drumVol - gDrum_) * 0.002f;
         gMaster_ += (p_.masterVol - gMaster_) * 0.002f;
 
-        float y = 0.3f * mel * gMel_ + 0.7f * bass_.render(sr_) * gBass_ + drums_.render(sr_) * gDrum_;
+        float y = 0.9f * mel * gMel_ + 0.7f * bass_.render() * gBass_ + drums_.render(sr_) * gDrum_;
 
         if (p_.speaker) {
             y = spkHP_.process(y).hp;

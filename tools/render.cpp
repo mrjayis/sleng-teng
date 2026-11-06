@@ -3,9 +3,10 @@
 //   teng_render [out.wav] [bpm]
 //
 // Checks the pattern tables, then renders a short Sleng Teng-style demo:
-// Rock rhythm with synchro auto-bass, alternating bass keys, and a few
-// melody stabs on top. Exits non-zero if the output is silent or not finite.
+// Rock rhythm at 82 BPM with synchro auto-bass on D, then G, and organ
+// stabs on top. Exits non-zero if the output is silent or not finite.
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -33,6 +34,27 @@ static bool checkPatterns() {
                 ok = false;
             }
     }
+    // uPD931 waves: legal delta codes, zero net drift, stay inside the 6-bit accumulator.
+    for (const auto& t : kTones) {
+        const Wave931* ws[2] = { &t.waveA, &t.waveB };
+        for (const Wave931* w : ws) {
+            int acc = 0, lo = 0, hi = 0;
+            for (int d : *w) {
+                const int a = d < 0 ? -d : d;
+                if (!(a == 0 || a == 1 || a == 2 || a == 4 || a == 8)) {
+                    std::fprintf(stderr, "tone %s: illegal delta %d\n", t.name, d);
+                    ok = false;
+                }
+                acc += d;
+                lo = std::min(lo, acc);
+                hi = std::max(hi, acc);
+            }
+            if (acc != 0 || lo < -32 || hi > 31) {
+                std::fprintf(stderr, "tone %s: wave drifts (sum %d, range %d..%d)\n", t.name, acc, lo, hi);
+                ok = false;
+            }
+        }
+    }
     return ok;
 }
 
@@ -55,7 +77,7 @@ static void writeWav(const char* path, const std::vector<float>& mono, int sr) {
 
 int main(int argc, char** argv) {
     const char* outPath = argc > 1 ? argv[1] : "teng40-demo.wav";
-    const double bpm = argc > 2 ? std::atof(argv[2]) : 120.0;
+    const double bpm = argc > 2 ? std::atof(argv[2]) : 82.0;
     const int sr = 44100;
 
     if (!checkPatterns()) return 2;
@@ -74,11 +96,13 @@ int main(int argc, char** argv) {
     // Event list in beats.
     struct Ev { double beat; bool on; int note; };
     std::vector<Ev> evs;
-    const int bassKeys[] = { 38, 38, 43, 38 }; // D, D, G, D — two bars each
+    // Bass key D (the key used for Sleng Teng), then G, back to D: two bars each.
+    const int bassKeys[] = { 38, 38, 43, 38 };
     for (int i = 0; i < 4; ++i) {
         evs.push_back({ i * 8.0 + 0.0, true, bassKeys[i] });
         evs.push_back({ i * 8.0 + 7.9, false, bassKeys[i] });
-        // off-beat organ stabs (D minor / G minor triads)
+        // off-beat organ stabs (D minor / G minor triads), from bar 3 on
+        if (i == 0) continue;
         const int root = bassKeys[i] + 24;
         const int chord[3] = { root, root + 3, root + 7 };
         for (int b = 0; b < 8; ++b)
