@@ -43,7 +43,7 @@ movable split point, optional **LO-FI** degradation and a **SPEAKER** emulation.
 | Melody synthesis engine | **Modelled on the real chip** | MAME's [uPD931 device](https://github.com/mamedev/mame/blob/master/src/devices/sound/upd931.cpp) (Devin Acker, BSD-3-Clause), based on Robin Whittle's MT-65 research notes. Wave/envelope rate tables and flag behaviour follow it |
 | The 22 tone presets | Approximated | The per-tone wave data is in the MT-40's ROM, which isn't published. Each preset is voiced by ear from the chip's own building blocks |
 | Hardware layout (8048-family accompaniment CPU driving 5 analog drum triggers, bass tone and bass envelope triggers; melody chip with main/sub waveform outputs) | From secondary sources | Hobbyist teardown notes and forum posts found by web search; not checked against a service manual |
-| Rock drums | **Supplied by the project owner** | Hi-hat on 8ths, snare on 2 and 4, kick `k..kk...` in 16ths, twice per bar |
+| Rock drums | **Supplied by the project owner** | Hi-hat on 8ths, snare on 2 and 4, kick `k..kk...` in 8ths |
 | Other five rhythms (drums and bass) | Approximated | Stored in the accompaniment CPU's 1 KB internal ROM; no public dump |
 | Drum and bass circuit details | Approximated | No schematic was reachable |
 

@@ -56,9 +56,9 @@ inline const std::array<Rhythm, kNumRhythms> kRhythms {{
     // transcription, which had a different neighbour note and ending.
     // Stored as one bar of 16ths; the record runs at roughly 82 BPM.
     // Drums, also supplied by the project owner: hi-hat on 8ths, snare on
-    // beats 2 and 4, kick "k..kk..." (16ths) repeated each half bar.
+    // beats 2 and 4, kick "k..kk..." in 8ths (one bar).
     { "Rock", 4, 4, 1,
-      "x..xx...x..xx...",
+      "x.....x.x.......",
       "....X.......X...",
       "x.x.x.x.x.x.x.x.",
       "",
