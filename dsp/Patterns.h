@@ -6,7 +6,7 @@
 // plays the pattern's bass line transposed to that key. The "Rock" pattern is
 // the one that became the Sleng Teng riddim.
 //
-// Sources: the Rock bass line comes from a published transcription (see
+// Sources: the Rock bass line was supplied by the project owner (see
 // below). The other patterns and all drum grids are best guesses: the MT-40
 // stores them in the 1 KB internal ROM of its accompaniment CPU (an NEC
 // 8048-family part that also drives the analog drum triggers and the bass
@@ -49,10 +49,11 @@ inline constexpr int kNumRhythms = 6;
 // clang-format off
 inline const std::array<Rhythm, kNumRhythms> kRhythms {{
     // ROCK — the Sleng Teng pattern.
-    // Bass line from Ableton Learning Music's transcription of "Under Mi
-    // Sleng Teng" (learningmusic.ableton.com/make-basslines/sleng-teng.html):
-    // in D at 82 BPM, 16ths: E D D D | E D D D | E D D D | A - B -
-    // i.e. +2 0 0 0 (x3), then -5, rest, -3, rest relative to the held key.
+    // Bass line, in C: B C C C | B C C C | B C C C | F - E -  (16ths)
+    // i.e. -1 0 0 0 (x3), then -7, rest, -8, rest relative to the held key
+    // (B, F and E all below the root). Supplied by the project owner; it
+    // replaces an earlier version taken from Ableton Learning Music's
+    // transcription, which had a different neighbour note and ending.
     // On the MT-40 this is the two-bar Rock preset in 8ths at roughly
     // double tempo; it is stored here as one bar of 16ths so a DAW set to the
     // record's tempo (~82 BPM) lines up.
@@ -64,10 +65,10 @@ inline const std::array<Rhythm, kNumRhythms> kRhythms {{
       "xoxoxoxoxoxoxoxo",
       "",
       "",
-      { {0,2,1},{1,0,1},{2,0,1},{3,0,1},
-        {4,2,1},{5,0,1},{6,0,1},{7,0,1},
-        {8,2,1},{9,0,1},{10,0,1},{11,0,1},
-        {12,-5,1},{14,-3,1} } },
+      { {0,-1,1},{1,0,1},{2,0,1},{3,0,1},
+        {4,-1,1},{5,0,1},{6,0,1},{7,0,1},
+        {8,-1,1},{9,0,1},{10,0,1},{11,0,1},
+        {12,-7,1},{14,-8,1} } },
 
     { "Samba", 4, 4, 2,
       "X..xX..xX..xX..xX..xX..xX..xX..x",
