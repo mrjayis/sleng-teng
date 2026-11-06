@@ -1,0 +1,52 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            name: linux
+          - os: macos-14
+            name: macos
+          - os: windows-2022
+            name: windows
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libasound2-dev libx11-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev libxext-dev libxcomposite-dev libfreetype-dev libfontconfig1-dev libgl1-mesa-dev
+
+      - name: Configure
+        shell: bash
+        run: |
+          EXTRA=""
+          if [ "$RUNNER_OS" = "macOS" ]; then EXTRA='-DCMAKE_OSX_ARCHITECTURES=arm64;x86_64'; fi
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release $EXTRA
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Smoke test
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Upload plugins
+        uses: actions/upload-artifact@v4
+        with:
+          name: Teng-40-${{ matrix.name }}
+          path: |
+            build/Teng40_artefacts/Release/VST3
+            build/Teng40_artefacts/Release/AU
+            build/Teng40_artefacts/Release/Standalone
+          if-no-files-found: error
