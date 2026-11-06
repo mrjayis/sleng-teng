@@ -226,7 +226,13 @@ int Engine::heldBassKey() const {
 void Engine::onBassKeyDown(int note) {
     bassHeld_[note] = true;
     bassRoot_ = note;
-    if (armed_) startRhythm(0.0);
+    // Synchro start. Also covers START being pressed in the same block as the
+    // bass key, before beginBlock() has seen the START edge.
+    const bool startPending = !t_.useHost && p_.synchro && p_.rhythmOn && !prevRhythmOn_;
+    if (armed_ || startPending) {
+        startRhythm(0.0);
+        prevRhythmOn_ = p_.rhythmOn;
+    }
 
     if (running_ && p_.autoBass) {
         // Pattern follows the new root from its next note on.

@@ -62,6 +62,26 @@ main/sub waveform DAC outputs, which is how the uPD931 works.
 Pattern data is in `dsp/Patterns.h`. Tone patches are in `dsp/Tones.h`, as
 uPD931 register settings (wave deltas, cycle modes, envelope codes).
 
+## Browser version
+
+`web/` is a browser build: the same C++ engine compiled to WebAssembly, run in
+an AudioWorklet, with a web copy of the plugin's panel. Play it with the mouse
+or touch, a MIDI keyboard (Web MIDI: Chrome, Edge, Firefox), or the computer
+keyboard (`Z`–`M` = bass section, `Q`–`I` = melody, number row for sharps).
+
+To build and try it locally:
+
+```bash
+sudo apt-get install clang lld wasi-libc libc++-18-dev-wasm32 libclang-rt-18-dev-wasm32   # Ubuntu 24.04
+./web/build.sh
+python3 -m http.server -d web 8000    # then open http://localhost:8000
+```
+
+`.github/workflows/pages.yml` publishes it to GitHub Pages on every push to
+`main`. One-time setup: **Settings → Pages → Source: GitHub Actions**. Pages
+for a private repository needs a paid GitHub plan, and the published site is
+public.
+
 ## Building
 
 Requirements: CMake 3.22+, a C++17 compiler, and on Linux the usual JUCE

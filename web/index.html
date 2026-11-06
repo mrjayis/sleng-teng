@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teng-40</title>
+  <meta name="description" content="Browser version of Teng-40, a recreation of the early-80s mini keyboard behind the Sleng Teng riddim.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="unit">
+    <header class="strip">
+      <h1>TENG-40</h1>
+      <p class="tag">ELECTRONIC MINI KEYBOARD / RHYTHM &amp; AUTO BASS</p>
+      <div class="stripes" aria-hidden="true"><i></i><i></i><i></i></div>
+    </header>
+
+    <div class="panel">
+      <section class="sec tones" aria-labelledby="tones-h">
+        <h2 id="tones-h">TONE SELECTOR</h2>
+        <div id="toneGrid" class="tone-grid" role="radiogroup" aria-label="Tone"></div>
+        <div class="row switches">
+          <button class="sw" data-param="vibrato">VIBRATO</button>
+          <button class="sw" data-param="sustain">SUSTAIN</button>
+          <button class="sw" data-param="velocity">VELOCITY</button>
+          <button class="sw" data-param="speaker">SPEAKER</button>
+        </div>
+        <div class="row steppers">
+          <label>TRANSPOSE</label>
+          <div class="stepper" data-param="transpose" data-min="-12" data-max="12"></div>
+        </div>
+      </section>
+
+      <section class="sec rhythm" aria-labelledby="rhythm-h">
+        <h2 id="rhythm-h">RHYTHM / BASS</h2>
+        <div id="rhythmGrid" class="rhythm-grid" role="radiogroup" aria-label="Rhythm"></div>
+        <div id="leds" class="leds" aria-hidden="true"></div>
+        <div class="row two">
+          <button id="startStop" class="sw big red" data-param="rhythmOn">START / STOP</button>
+          <button id="fill" class="sw big silver">FILL-IN</button>
+        </div>
+        <div class="row three">
+          <button class="sw" data-param="synchro">SYNCHRO</button>
+          <button class="sw" data-param="autoBass">AUTO BASS</button>
+        </div>
+        <div class="row steppers">
+          <label>BASS OCT</label>
+          <div class="stepper" data-param="bassOctave" data-min="-2" data-max="2"></div>
+        </div>
+        <div class="row steppers">
+          <label>SPLIT</label>
+          <div class="stepper" data-param="split" data-min="24" data-max="84" data-note></div>
+        </div>
+      </section>
+
+      <section class="sec mixer" aria-labelledby="mixer-h">
+        <h2 id="mixer-h">MIXER</h2>
+        <div class="faders">
+          <label class="fader"><input type="range" data-param="melodyVol" min="0" max="1" step="0.01"><output></output><span>MELODY</span></label>
+          <label class="fader"><input type="range" data-param="bassVol" min="0" max="1" step="0.01"><output></output><span>BASS</span></label>
+          <label class="fader"><input type="range" data-param="drumVol" min="0" max="1" step="0.01"><output></output><span>RHYTHM</span></label>
+          <label class="fader"><input type="range" data-param="tempo" min="40" max="240" step="1"><output id="tempoVal"></output><span>TEMPO</span></label>
+          <label class="fader"><input type="range" data-param="lofi" min="0" max="1" step="0.01"><output></output><span>LO-FI</span></label>
+          <label class="fader"><input type="range" data-param="masterVol" min="0" max="1" step="0.01"><output></output><span>VOLUME</span></label>
+        </div>
+      </section>
+    </div>
+
+    <div class="kb-legend"><span class="bass">BASS (below split)</span><span class="mel">MELODY</span></div>
+    <div class="kb-wrap"><div id="keyboard" class="keyboard" aria-label="Keyboard"></div></div>
+
+    <div id="power" class="power">
+      <button id="powerBtn">POWER ON</button>
+      <p>Browsers need a click before they'll play sound.</p>
+    </div>
+  </main>
+
+  <footer>
+    <p><b>Play:</b> click the keys, use a MIDI keyboard (Chrome/Edge), or your computer keyboard: the
+      <kbd>Z</kbd>–<kbd>M</kbd> row plays the bass section and <kbd>Q</kbd>–<kbd>I</kbd> (with the number row for sharps) plays melody.
+      <b>Sleng Teng:</b> ROCK, START/STOP, then hold <b>D</b> in the bass section (<kbd>X</kbd> on your keyboard).</p>
+    <p class="small">Browser build of the Teng-40 plugin, modelled on the Casio MT-40. Not affiliated with or endorsed by Casio.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

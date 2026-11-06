@@ -50,3 +50,35 @@ jobs:
             build/Teng40_artefacts/Release/AU
             build/Teng40_artefacts/Release/Standalone
           if-no-files-found: error
+
+  web:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install WebAssembly toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-18 lld-18 wasi-libc libc++-18-dev-wasm32 libclang-rt-18-dev-wasm32
+      - name: Build engine (WebAssembly)
+        run: CXX=clang++-18 ./web/build.sh
+      - name: Smoke test in Node
+        run: |
+          node -e "
+          (async () => {
+            const { instance } = await WebAssembly.instantiate(require('fs').readFileSync('web/teng40.wasm'), {});
+            const x = instance.exports; x._initialize(); x.teng_init(48000);
+            x.teng_set_param(7, 1); x.teng_note_on(38, 1, 1);
+            let s = 0; for (let b = 0; b < 375; b++) { const f = new Float32Array(x.memory.buffer, x.teng_process(128), 128); for (const v of f) s += v * v; }
+            const rms = Math.sqrt(s / (375 * 128));
+            console.log('rms', rms, 'running', x.teng_running());
+            if (!(rms > 0.01) || !x.teng_running()) process.exit(1);
+          })();"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Teng-40-web
+          path: |
+            web/index.html
+            web/style.css
+            web/app.js
+            web/worklet.js
+            web/teng40.wasm
