@@ -72,6 +72,7 @@ automatically.
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ctest --test-dir build -C Release        # renders build/teng40-demo.wav
+./build/teng_render disco.wav 118 Disco "Synth Reed"   # any rhythm / tone by name
 ```
 
 Plugins land in `build/Teng40_artefacts/Release/{VST3,AU,Standalone}`. Copy the

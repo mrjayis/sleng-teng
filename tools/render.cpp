@@ -1,12 +1,15 @@
 // Offline renderer / smoke test for the Teng-40 engine.
 //
-//   teng_render [out.wav] [bpm]
+//   teng_render [out.wav] [bpm] [rhythm] [tone]
+//
+//   rhythm and tone are preset names, e.g. "Disco" "Synth Reed" (default Rock, Organ).
 //
 // Checks the pattern tables, then renders a short Sleng Teng-style demo:
 // Rock rhythm at 82 BPM with synchro auto-bass on D, then G, and major organ
 // stabs on top. Exits non-zero if the output is silent or not finite.
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -84,12 +87,21 @@ int main(int argc, char** argv) {
 
     Engine e;
     Params p;
-    p.rhythm = 0;      // Rock
+    auto findByName = [](const char* want, auto& table) {
+        for (int i = 0; i < (int)table.size(); ++i) {
+            const char* a = table[(size_t)i].name;
+            const char* b = want;
+            while (*a && *b && std::tolower((unsigned char)*a) == std::tolower((unsigned char)*b)) { ++a; ++b; }
+            if (!*a && !*b) return i;
+        }
+        std::fprintf(stderr, "unknown preset name: %s\n", want);
+        std::exit(1);
+    };
+    p.rhythm = argc > 3 ? findByName(argv[3], kRhythms) : 0; // Rock
     p.tempo = bpm;
     p.synchro = true;
     p.autoBass = true;
-    p.tone = 2;        // Organ for the stabs
-    p.lofi = 0.3f;
+    p.tone = argc > 4 ? findByName(argv[4], kTones) : 2;     // Organ for the stabs
     e.setParams(p);
     e.prepare(sr);
 
@@ -101,7 +113,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < 4; ++i) {
         evs.push_back({ i * 8.0 + 0.0, true, bassKeys[i] });
         evs.push_back({ i * 8.0 + 7.9, false, bassKeys[i] });
-        // off-beat organ stabs (D major / G major triads), from bar 3 on
+        // off-beat stabs (D major / G major triads), from bar 3 on
         if (i == 0) continue;
         const int root = bassKeys[i] + 24;
         const int chord[3] = { root, root + 4, root + 7 };
@@ -144,7 +156,7 @@ int main(int argc, char** argv) {
         peak = std::fmax(peak, std::fabs(s));
     }
     const double rms = std::sqrt(sumSq / out.size());
-    std::printf("rendered %d samples, rms %.4f, peak %.4f -> %s\n", total, rms, peak, outPath);
+    std::printf("%s / %s: rendered %d samples, rms %.4f, peak %.4f -> %s\n", kRhythms[(size_t)p.rhythm].name, kTones[(size_t)p.tone].name, total, rms, peak, outPath);
     if (rms < 0.01) { std::fprintf(stderr, "output too quiet\n"); return 4; }
 
     writeWav(outPath, out, sr);
